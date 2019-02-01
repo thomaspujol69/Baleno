@@ -255,7 +255,7 @@ endif()
 
 if(NOT MSVC)
   ## Go get us some OpenSSL libraries
-  set(OPENSSL_USE_STATIC_LIBS ON)
+  set(OPENSSL_USE_STATIC_LIBS OFF)
   find_package(OpenSSL)
   if(OPENSSL_FOUND)
     include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
