@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -34,7 +34,11 @@ Nigel::Nigel(
     m_timeout(timeout),
     m_daemonHost(daemonHost),
     m_daemonPort(daemonPort),
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+    m_httpClient(std::make_shared<httplib::SSLClient>(daemonHost.c_str(), daemonPort, timeout.count()))
+#else
     m_httpClient(std::make_shared<httplib::Client>(daemonHost.c_str(), daemonPort, timeout.count()))
+#endif
 {
 }
 
@@ -59,9 +63,15 @@ void Nigel::swapNode(const std::string daemonHost, const uint16_t daemonPort)
     m_daemonHost = daemonHost;
     m_daemonPort = daemonPort;
 
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+    m_httpClient = std::make_shared<httplib::SSLClient>(
+        daemonHost.c_str(), daemonPort, m_timeout.count()
+    );
+#else
     m_httpClient = std::make_shared<httplib::Client>(
         daemonHost.c_str(), daemonPort, m_timeout.count()
     );
+#endif
 
     init();
 }
