@@ -2,7 +2,7 @@
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2016-2018, The Karbowanec developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include <alloca.h>
@@ -327,7 +327,7 @@ namespace Crypto {
     ge_p1p1_to_p2(&point, &point2);
     ge_tobytes(reinterpret_cast<unsigned char*>(&key), &point);
   }
-  
+
   void crypto_ops::generate_key_image(const PublicKey &pub, const SecretKey &sec, KeyImage &image) {
     ge_p3 point;
     ge_p2 point2;
@@ -336,7 +336,7 @@ namespace Crypto {
     ge_scalarmult(&point2, reinterpret_cast<const unsigned char*>(&sec), &point);
     ge_tobytes(reinterpret_cast<unsigned char*>(&image), &point2);
   }
-  
+
 #ifdef _MSC_VER
 #pragma warning(disable: 4200)
 #endif
@@ -484,7 +484,7 @@ namespace Crypto {
             ge_p2 tmp2;
             ge_p3 tmp3;
 
-            if (sc_check(reinterpret_cast<const unsigned char*>(&signatures[i])) != 0 
+            if (sc_check(reinterpret_cast<const unsigned char*>(&signatures[i])) != 0
              || sc_check(reinterpret_cast<const unsigned char*>(&signatures[i]) + 32) != 0)
             {
                 return false;
@@ -532,5 +532,47 @@ namespace Crypto {
         );
 
         return sc_isnonzero(reinterpret_cast<unsigned char*>(&h)) == 0;
+    }
+
+    void crypto_ops::add_keys(const PublicKey & A, const PublicKey & B,
+                              PublicKey & AB) {
+        ge_p3 B2, A2;
+
+        ge_frombytes_vartime(&B2,
+                             reinterpret_cast <
+                             const unsigned char *>(&B));
+        ge_frombytes_vartime(&A2,
+                             reinterpret_cast <
+                             const unsigned char *>(&A));
+        ge_cached tmp2;
+
+        ge_p3_to_cached(&tmp2, &B2);
+        ge_p1p1 tmp3;
+
+        ge_add(&tmp3, &A2, &tmp2);
+        ge_p1p1_to_p3(&A2, &tmp3);
+        ge_p3_tobytes(reinterpret_cast < unsigned char *>(&AB), &A2);
+    }
+
+    void crypto_ops::add_keys(const SecretKey & A, const SecretKey & B,
+                              SecretKey & AB) {
+        sc_add(reinterpret_cast < unsigned char *>(&AB),
+               reinterpret_cast < const unsigned char *>(&A),
+               reinterpret_cast < const unsigned char *>(&B));
+    }
+
+    void crypto_ops::mul_keys(const SecretKey & A, const PublicKey & B,
+                              SecretKey & AB) {
+        ge_p3 A2;
+
+        ge_p2 tmp2;
+
+        ge_frombytes_vartime(&A2,
+                             reinterpret_cast <
+                             const unsigned char *>(&A));
+        ge_scalarmult(&tmp2, reinterpret_cast < const unsigned char *>(&B),
+                      &A2);
+
+        ge_tobytes(reinterpret_cast < unsigned char *>(&AB), &tmp2);
     }
 }

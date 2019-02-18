@@ -1,8 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2016-2018, The Karbowanec developers
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -35,10 +35,10 @@ struct EllipticCurveScalar {
 
     static void generate_keys(PublicKey &, SecretKey &);
     friend void generate_keys(PublicKey &, SecretKey &);
-	static void generate_deterministic_keys(PublicKey &pub, SecretKey &sec, SecretKey& second);
-	friend void generate_deterministic_keys(PublicKey &pub, SecretKey &sec, SecretKey& second);
-	static SecretKey generate_m_keys(PublicKey &pub, SecretKey &sec, const SecretKey& recovery_key = SecretKey(), bool recover = false);
-	friend SecretKey generate_m_keys(PublicKey &pub, SecretKey &sec, const SecretKey& recovery_key, bool recover);
+    static void generate_deterministic_keys(PublicKey &pub, SecretKey &sec, SecretKey& second);
+    friend void generate_deterministic_keys(PublicKey &pub, SecretKey &sec, SecretKey& second);
+    static SecretKey generate_m_keys(PublicKey &pub, SecretKey &sec, const SecretKey& recovery_key = SecretKey(), bool recover = false);
+    friend SecretKey generate_m_keys(PublicKey &pub, SecretKey &sec, const SecretKey& recovery_key, bool recover);
     static bool check_key(const PublicKey &);
     friend bool check_key(const PublicKey &);
     static bool secret_key_to_public_key(const SecretKey &, PublicKey &);
@@ -86,6 +86,10 @@ struct EllipticCurveScalar {
             const KeyImage &image,
             const std::vector<PublicKey> pubs,
             const std::vector<Signature> signatures);
+
+        static void add_keys(const PublicKey &, const PublicKey &, PublicKey &);
+        static void add_keys(const SecretKey &, const SecretKey &, SecretKey &);
+        static void mul_keys(const SecretKey &, const PublicKey &, SecretKey &);
   };
 
   /* Generate a new key pair
@@ -139,7 +143,7 @@ struct EllipticCurveScalar {
     const PublicKey &derived_key, PublicKey &base, EllipticCurveScalar &hashed_derivation) {
     return crypto_ops::underive_public_key_and_get_scalar(derivation, output_index, derived_key, base, hashed_derivation);
   }
-  
+
   inline void derive_secret_key(const KeyDerivation &derivation, std::size_t output_index,
     const SecretKey &base, const uint8_t* prefix, size_t prefixLength, SecretKey &derived_key) {
     crypto_ops::derive_secret_key(derivation, output_index, base, prefix, prefixLength, derived_key);
@@ -188,5 +192,104 @@ struct EllipticCurveScalar {
 
   inline void hash_data_to_ec(const uint8_t* data, std::size_t len, PublicKey& key) {
     crypto_ops::hash_data_to_ec(data, len, key);
+  }
+
+  inline PublicKey addKeys(const PublicKey & publicKey,
+                           const std::vector < PublicKey > &publicKeys) {
+      PublicKey l_publicKey = publicKey;
+
+      /* Loop through the public keys and add them together */
+      for (const auto & pk:publicKeys)
+      {
+          crypto_ops::add_keys(l_publicKey, pk, l_publicKey);
+      }
+
+      return l_publicKey;
+  }
+
+  inline SecretKey addKeys(const SecretKey & secretKey,
+                           const std::vector < SecretKey > &secretKeys) {
+      SecretKey l_secretKey = secretKey;
+
+      /* Loop through the secret keys and add them together */
+      for (const auto & sk:secretKeys)
+      {
+          crypto_ops::add_keys(l_secretKey, sk, l_secretKey);
+      }
+
+      return l_secretKey;
+  }
+
+  inline bool generate_multisig_N_N(const SecretKey & secretViewKey,
+                                    const PublicKey & publicSpendKey,
+                                    const std::vector < SecretKey >
+                                    &secretViewKeys,
+                                    const std::vector < PublicKey >
+                                    &publicSpendKeys,
+                                    SecretKey & multisigPrivateViewKey,
+                                    PublicKey & multisigPublicViewKey,
+                                    PublicKey & multisigPublicSpendKey) {
+      // N of N consists of just adding the keys together
+
+      // Add the private view keys together to get the new privateView Key
+      multisigPrivateViewKey = addKeys(secretViewKey, secretViewKeys);
+
+      // Then compute the the new publicViewKey
+      secret_key_to_public_key(multisigPrivateViewKey,
+                               multisigPublicViewKey);
+
+      // Add the public spend keys together to get the new publicSpendKey
+      multisigPublicSpendKey = addKeys(publicSpendKey, publicSpendKeys);
+
+      return check_key(multisigPublicSpendKey)
+          && check_key(multisigPublicViewKey);
+  }
+
+  inline bool generate_multisig_N_M(const SecretKey & secretViewKey,
+                                    const SecretKey & secretSpendKey,
+                                    const std::vector < SecretKey >
+                                    &secretViewKeys,
+                                    const std::vector < PublicKey >
+                                    &publicSpendKeys,
+                                    std::vector < SecretKey >
+                                    &multisigPrivateSpendKeys,
+                                    SecretKey &
+                                    ourMultisigSecretSpendKey,
+                                    PublicKey &
+                                    ourMultisigPublicSpendKey,
+                                    SecretKey & multisigPrivateViewKey,
+                                    PublicKey & multisigPublicViewKey) {
+
+      multisigPrivateSpendKeys.clear();
+
+      // N of M takes a little bit more work
+
+      // Add the private view keys together to get the new privateView Key
+      multisigPrivateViewKey = addKeys(secretViewKey, secretViewKeys);
+
+      // Then compute the the new publicViewKey
+      secret_key_to_public_key(multisigPrivateViewKey,
+                               multisigPublicViewKey);
+
+      // Create the basis for the new multisig private spend key */
+      ourMultisigSecretSpendKey = secretSpendKey;
+
+      // Multiply each publicSpendKey by our privateSpendKey
+      for (const auto & pk:publicSpendKeys)
+      {
+          SecretKey m_spendKey;
+
+          crypto_ops::mul_keys(secretSpendKey, pk, m_spendKey);
+          multisigPrivateSpendKeys.push_back(m_spendKey);
+          crypto_ops::add_keys(ourMultisigSecretSpendKey, m_spendKey,
+                               ourMultisigSecretSpendKey);
+      }
+
+      /* Derive our multisig public spend key that need shared with others
+         so that everyone can generate the shared public spend key */
+      secret_key_to_public_key(ourMultisigSecretSpendKey,
+                               ourMultisigPublicSpendKey);
+
+      return check_key(multisigPublicViewKey);
   }
 }
