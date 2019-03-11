@@ -270,6 +270,7 @@ const static   boost::uuids::uuid CRYPTONOTE_NETWORK         =
 
 const char* const SEED_NODES[] = {
   "bibiche.duckdns.org:11897",//homeA
+  "5.51.178.89:11897" //homeBi
   "bibiche.duckdns.org:11898" //homer
   
 };
