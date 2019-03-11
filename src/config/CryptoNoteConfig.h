@@ -68,7 +68,7 @@ TurtleCoind --print-genesis-tx --genesis-block-reward-address TRTLv2Fyavy8CXG8BP
 * You should see your premine appear in the previously generated wallet.
 
 */
-const char     GENESIS_COINBASE_TX_HEX[]                     = "010a01ff000188f3b501029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd088071210142694232c5b04151d9e4c27d31ec7a68ea568b19488cfcb422659a07a0e44dd5";
+const char     GENESIS_COINBASE_TX_HEX[]                     = "012801ff0001c090b0d5fad506025ad575d1a7e5bb9ce32fd68cab32aa8a2901746fa16d0bf5a05c9fc3ad2de9502101cca1a26bdb5b81f6f715c337707d728c4a37bd944ab340513a84b452c227cb9b";
 static_assert(sizeof(GENESIS_COINBASE_TX_HEX)/sizeof(*GENESIS_COINBASE_TX_HEX) != 1, "GENESIS_COINBASE_TX_HEX must not be empty.");
 
 /* This is the unix timestamp of the first "mined" block (technically block 2, not the genesis block)
@@ -261,17 +261,17 @@ const uint64_t DATABASE_READ_BUFFER_MB_DEFAULT_SIZE          = 10;
 const uint32_t DATABASE_DEFAULT_MAX_OPEN_FILES               = 100;
 const uint16_t DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT     = 2;
 
-const char     LATEST_VERSION_URL[]                          = "http://latest.turtlecoin.lol";
+const char     LATEST_VERSION_URL[]                          = "https://discord.gg/83E7fMU";
 const std::string LICENSE_URL                                = "https://github.com/turtlecoin/turtlecoin/blob/master/LICENSE";
 const static   boost::uuids::uuid CRYPTONOTE_NETWORK         =
 {
-    {  0xb5, 0x0c, 0x4a, 0x6c, 0xcf, 0x52, 0x57, 0x41, 0x65, 0xf9, 0x91, 0xa4, 0xb6, 0xc1, 0x43, 0xe9  }
+    {  0xb5, 0x0c, 0x2a, 0x6d, 0xcf, 0x52, 0x17, 0x21, 0x65, 0xfe, 0x91, 0xa4, 0xb8, 0xc1, 0x44, 0xe9  }
 };
 
 const char* const SEED_NODES[] = {
-  "206.189.142.142:11897",//rock
-  "145.239.88.119:11999", //cision
-  "142.44.242.106:11897", //tom
-  "165.227.252.132:11897" //iburnmycd
+  "bibiche.duckdns.org:11897",//homeA
+  "bibiche.duckdns.org:11899",//homea
+  "bibiche.duckdns.org:11898" //homer
+  
 };
 } // CryptoNote

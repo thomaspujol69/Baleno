@@ -1,0 +1,12 @@
+Coucou
+ 
+Les builds préconstruites sont dans G:\Baleno-development\build\src\Release
+
+Deamon : Balenod.exe
+
+Wallet : WalletB.exe
+
+Le github du coin original (notamment pour recompiler) :
+https://github.com/turtlecoin/turtlecoin/
+
+Pour lancer le coin il faut 3 peers au total.
